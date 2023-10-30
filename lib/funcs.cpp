@@ -1,4 +1,4 @@
-#include <string>
+#include <cstring>
 #include <cstdlib>
 #ifdef _WIN32
 #else
