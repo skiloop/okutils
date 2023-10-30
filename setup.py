@@ -92,7 +92,8 @@ def update_build_flags(default_boost_python_root=None):
         return root_path
 
     extra_compile_flags.append("-I" + root_path + "/include")
-    extra_link_flags.append("-L" + root_path + "/lib")
+    if SYSTEM == "Darwin":
+        extra_link_flags.append("-L" + root_path + "/lib")
     return root_path
 
 
@@ -101,7 +102,8 @@ if SYSTEM == "Darwin":
     libraries.append(find_boost_library_osx(boost_python_root + "/lib"))
 else:
     boost_python_root = update_build_flags()
-    libraries.append("boost_python" if PY_VERSION[0] == "2" else "boost_python3")
+    extra_compile_flags.append("-DBOOST_BIND_GLOBAL_PLACEHOLDERS")
+    libraries.append("boost_python" if PY_VERSION[0] == "2" else ("boost_python3" + PY_VERSION[1]))
 sources = [src_path("funcs.cpp"), src_path("utils.cpp")]
 
 
