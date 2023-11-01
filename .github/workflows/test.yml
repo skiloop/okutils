@@ -6,35 +6,30 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Test
 
 on:
-  release:
-    types: [ published ]
-
-permissions:
-  contents: read
-
+  push:
+    branches: [ "main" ]
 jobs:
-  deploy:
-
+  test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          apt-get install -y libboost-python-dev
+          sudo apt-get install -y libboost-python-dev
           python -m pip install --upgrade pip
-          pip install build
-      - name: Build package
-        run: python setup.py build
-      - name: Publish package
-        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          pip install -r requirements.txt
+          pip install -r requirements-tests.txt
+          echo "PYTHONPATH=./tests/:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Tests
+        run: |
+          python -m unittest discover -s tests -p '*_tests.py' -v

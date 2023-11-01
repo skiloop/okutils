@@ -1,0 +1,82 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Release
+
+on:
+  workflow_run:
+    workflows: [ "Test" ]
+    branches: [ main ]
+    types:
+      - completed
+  create:
+    tags:
+      - "v*.*.*"
+jobs:
+
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+                            - name: Install dependencies [Linux]
+                            if: ${{ matrix.os == 'ubuntu-latest' }}
+                            run: |
+                              brew install boost-python3
+                              python -m pip install --upgrade pip
+                              pip install build setuptools wheel
+                              pip install -r requirements.txt
+                              pip install -r requirements-tests.txt
+                              echo "PYTHONPATH=./tests/:$PYTHONPATH" >> $GITHUB_ENV
+                            - name: Install dependencies [macOS]
+                              if: ${{ matrix.os == 'macos-latest' }}
+                              run: |
+                                sudo apt-get install -y libboost-python-dev
+                                python -m pip install --upgrade pip
+                                pip install -r requirements.txt
+                                pip install -r requirements-tests.txt
+                                echo "PYTHONPATH=./tests/:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Tests
+          run: |
+            python -m unittest discover -s tests -p '*_tests.py' -v
+      - uses: actions/checkout@v3
+
+  release:
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build package
+        run: python -m build
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+

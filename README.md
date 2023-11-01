@@ -1,3 +1,4 @@
+[![CICD](https://github.com/skiloop/okutils/actions/workflows/code.yml/badge.svg)](https://github.com/sharkdp/fd/actions/workflows/CICD.yml)
 okutils
 ===== 
 a python utils
