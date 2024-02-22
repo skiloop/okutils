@@ -73,12 +73,15 @@ def find_boost_library_osx(boost_lib_path):
 
 
 def find_boost_library_linux(path):
-    pattern = re.compile(r'^libboost_python3\d?[^/]*\.so$')
-    result = find_file(path, lambda s: pattern.match(s))
-    if result is not None:
-        return result
-    pattern = re.compile(r'^libboost_python3\d?[^/]*\.a$')
-    return find_file(path, lambda s: pattern.match(s))
+    paths = ["/lib", "/usr/lib", "/usr/local/lib", "/usr/lib/x86_64-linux-gnu"]
+    if path is not None:
+        paths.insert(0, path)
+    pattern = re.compile(r'^libboost_python3\d?[^/]*\.(so|a)$')
+    for search_path in paths:
+        print(f"searching path: {search_path}")
+        result = find_file(search_path, lambda s: pattern.match(s))
+        if result is not None:
+            return result
 
 
 def get_boost_python_link_option(path):
@@ -110,18 +113,19 @@ extra_link_flags = []
 
 
 def update_build_flags(root_path: str):
+    if root_path is None or root_path == "" or not os.path.exists(root_path):
+        return
     extra_compile_flags.append("-I" + root_path + "/include")
     if SYSTEM == "Darwin":
         extra_link_flags.append("-L" + root_path + "/lib")
 
 
 boost_python_root = get_boost_python_root()
-print(f"boost python root: {boost_python_root}")
-if boost_python_root is None:
-    raise FileNotFoundError("cannot find boost_python path")
+# print(f"boost python root: {boost_python_root}")
+# if boost_python_root is None:
+#     raise FileNotFoundError("cannot find boost_python path")
 update_build_flags(boost_python_root)
 if SYSTEM == "linux":
-    update_build_flags(boost_python_root)
     extra_compile_flags.append("-DBOOST_BIND_GLOBAL_PLACEHOLDERS")
 libraries.append(get_boost_python_link_option(boost_python_root))
 sources = [src_path("funcs.cpp"), src_path("utils.cpp")]
