@@ -66,3 +66,7 @@ class Reader:
             if key is None:
                 break
             yield key, value
+
+    def apply(self, action):
+        for key, value in self.iter():
+            action(key.decode(), value.decode())
