@@ -68,5 +68,11 @@ class Reader:
             yield key, value
 
     def apply(self, action):
+        """
+
+        :param action: func to handle doc, parameters are like (key:str, value:bytes)
+
+        :return:
+        """
         for key, value in self.iter():
-            action(key.decode(), value.decode())
+            action(key.decode(), value)
