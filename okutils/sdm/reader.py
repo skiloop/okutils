@@ -17,7 +17,7 @@ class Reader:
     def __del__(self):
         self.fd.close()
 
-    def _readone_i(self):
+    def _readone_i(self, key_only=False):
         sz0 = self.fd.read(4)
         if len(sz0) == 0:
             return None, None
@@ -33,6 +33,9 @@ class Reader:
         if len(sz0) != 4:
             raise IOError('invalid file')
         (sz,) = struct.unpack("I", sz0)
+        if key_only:
+            self.fd.seek(sz, 1)
+            return fn, None
         gzconn = self.fd.read(sz)
         if len(gzconn) != sz:
             raise IOError('invalid file')
@@ -51,18 +54,18 @@ class Reader:
             return 1.0
         return float(self._nread) / self._fsz
 
-    def readone(self):
+    def readone(self, key_only=False):
         with self.lock:
-            return self._readone_i()
+            return self._readone_i(key_only)
 
     def readone_at(self, pos):
         with self.lock:
             self.fd.seek(pos)
             return self._readone_i()
 
-    def iter(self):
+    def iter(self, key_only=False):
         while True:
-            key, value = self.readone()
+            key, value = self.readone(key_only)
             if key is None:
                 break
             yield key, value
