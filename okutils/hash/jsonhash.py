@@ -17,7 +17,7 @@ class JsonHash(HashBase):
     def time():
         return int(time.time() * 1000)
 
-    def __load(self) -> dict:
+    def __load(self):
         if not os.path.exists(self._filename):
             return {}
         with open(self._filename, 'r') as fin:
@@ -34,14 +34,14 @@ class JsonHash(HashBase):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.save()
 
-    def set(self, name: (str, bytes), value):
+    def set(self, name, value):
         self._cache[name] = value
         now = self.time()
         if self.auto_save and now - self.__last_save > self.interval:
             self.save()
 
-    def get(self, name: (str, bytes)):
+    def get(self, name):
         return self._cache.get(name)
 
-    def has(self, name: (str, bytes)) -> bool:
+    def has(self, name):
         return name in self._cache

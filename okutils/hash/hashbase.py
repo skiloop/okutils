@@ -3,13 +3,13 @@ import abc
 
 class HashBase(object):
     @abc.abstractmethod
-    def set(self, name: (str, bytes), value):
+    def set(self, name, value):
         raise NotImplementedError('virtual function called')
 
     @abc.abstractmethod
-    def get(self, name: (str, bytes)):
+    def get(self, name):
         raise NotImplementedError('virtual function called')
 
     @abc.abstractmethod
-    def has(self, name: (str, bytes)) -> bool:
+    def has(self, name):
         raise NotImplementedError('virtual function called')

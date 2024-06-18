@@ -78,14 +78,14 @@ def find_boost_library_linux(path):
         paths.insert(0, path)
     pattern = re.compile(r'^libboost_python3\d?[^/]*\.(so|a)$')
     for search_path in paths:
-        print(f"searching path: {search_path}")
+        print("searching path: " + search_path)
         result = find_file(search_path, lambda s: pattern.match(s))
         if result is not None:
             return result
 
 
 def get_boost_python_link_option(path):
-    if os.path.exists(f"{path}/lib"):
+    if os.path.exists(path + "/lib"):
         path = path + "/lib"
     boost_library = None
     if SYSTEM == 'Darwin':
@@ -112,7 +112,7 @@ extra_compile_flags = ['-std=c++11']
 extra_link_flags = []
 
 
-def update_build_flags(root_path: str):
+def update_build_flags(root_path):
     if root_path is None or root_path == "" or not os.path.exists(root_path):
         return
     extra_compile_flags.append("-I" + root_path + "/include")
