@@ -76,7 +76,7 @@ def find_boost_library_linux(path):
     paths = ["/lib", "/usr/lib", "/usr/local/lib", "/usr/lib/x86_64-linux-gnu"]
     if path is not None:
         paths.insert(0, path)
-    pattern = re.compile(r'^libboost_python(?:-py3[0-9]|3[0-9])\.(so|a)$')
+    pattern = re.compile(r'^libboost_python(?:-py3[0-9]+|3[0-9]+)\.(so|a)$')
     for search_path in paths:
         print(f"searching path: {search_path}")
         result = find_file(search_path, lambda s: pattern.match(s))
@@ -118,6 +118,9 @@ def update_build_flags(root_path: str):
     extra_compile_flags.append("-I" + root_path + "/include")
     if SYSTEM == "Darwin":
         extra_link_flags.append("-L" + root_path + "/lib")
+    else:
+        # linux search compile time library path first when running
+        extra_link_flags.append("-Wl,-rpath," + root_path + "/lib")
 
 
 boost_python_root = get_boost_python_root()
