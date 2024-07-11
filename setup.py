@@ -77,6 +77,8 @@ def find_boost_library_linux(path):
     if path is not None:
         paths.insert(0, path)
     pattern = re.compile(r'^libboost_python3\d?[^/]*\.(so|a)$')
+    if pattern is None:
+        pattern = re.compile(r'^libboost_python-py3\d?[^/]*\.(so|a)$')
     for search_path in paths:
         print(f"searching path: {search_path}")
         result = find_file(search_path, lambda s: pattern.match(s))
