@@ -22,7 +22,7 @@ int64_t mp_append_log(const char * logfile, const char * logs, int len)
 #ifdef _WIN32
 	HANDLE hFile;
 	{
-		DWORD desiredAccess = GENERIC_WRITE;
+		DWORD desiredAccess = FILE_APPEND_DATA;
 		DWORD shareMode = FILE_SHARE_READ;
 		DWORD creationDisposition = OPEN_ALWAYS;
 		DWORD flagsAndAttributes = FILE_ATTRIBUTE_NORMAL;

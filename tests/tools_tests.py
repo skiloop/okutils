@@ -7,9 +7,11 @@ class ToolTestCase(unittest.TestCase):
     def test_mp_append_log(self):
         data = "hello world!"
         size = mp_append_log("./log.txt", data)
-        self.assertEqual(size == 0, True)  # add assertion here
+        self.assertEqual(size, 0, f"file size not 0, get {size}")  # add assertion here
+        mp_append_log("./log.txt", data)
         size = mp_append_log("./log.txt", data)
-        self.assertEqual(size == len(data), True)  # add assertion here
+        expected = 2 * len(data)
+        self.assertEqual(size, expected, f"file size ｛size｝, expected: {expected}")  # add assertion here
 
 
 if __name__ == '__main__':
