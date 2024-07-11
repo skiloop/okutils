@@ -132,33 +132,14 @@ sources = [src_path("funcs.cpp"), src_path("utils.cpp")]
 
 
 def run_setup():
+    """run setup"""
     tools_ext = Extension("okutils.tools", sources, extra_compile_args=extra_compile_flags,
                           extra_link_args=extra_link_flags,
                           libraries=libraries)
     setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        author=AUTHOR,
-        long_description=long_description,
-        author_email=EMAIL,
-        url=URL,
         packages=find_packages(exclude=('tests', 'tests.*')),
-        license='MIT',
-        classifiers=[
-            'Operating System :: MacOS :: MacOS X',
-            'Operating System :: POSIX :: Linux',
-            'License :: OSI Approved :: MIT License',
-            'Programming Language :: Python',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.7',
-            'Programming Language :: Python :: 3.8',
-            'Programming Language :: Python :: 3.9',
-            "Topic :: Utilities",
-            'Topic :: Software Development :: Libraries :: Python Modules',
-        ],
-        long_description_content_type="text/markdown",
-        ext_modules=[tools_ext])
+        ext_modules=[tools_ext]
+    )
 
 
 help_text = """  
