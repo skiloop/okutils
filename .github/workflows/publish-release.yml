@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
-        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        python-version: [ "3.8", "3.11" ]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -32,37 +32,33 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-                            - name: Install dependencies [Linux]
-                            if: ${{ matrix.os == 'ubuntu-latest' }}
-                            run: |
-                              brew install boost-python3
-                              python -m pip install --upgrade pip
-                              pip install build setuptools wheel
-                              pip install -r requirements.txt
-                              pip install -r requirements-tests.txt
-                              echo "PYTHONPATH=./tests/:$PYTHONPATH" >> $GITHUB_ENV
-                            - name: Install dependencies [macOS]
-                              if: ${{ matrix.os == 'macos-latest' }}
-                              run: |
-                                sudo apt-get install -y libboost-python-dev
-                                python -m pip install --upgrade pip
-                                pip install -r requirements.txt
-                                pip install -r requirements-tests.txt
-                                echo "PYTHONPATH=./tests/:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Install dependencies [Linux]
+        run: |
+          python -m pip install --upgrade pip
+          pip install build setuptools wheel
+          pip install -r requirements.txt
+          pip install -r requirements-tests.txt
       - name: Tests
-          run: |
-            python -m unittest discover -s tests -p '*_tests.py' -v
+        run: |
+          cd tests
+          python -m unittest discover -p '*_tests.py' -v
       - uses: actions/checkout@v3
 
   release:
-
     permissions:
       contents: write
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python-version: [ "3.8", "3.11" ]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Build package
-        run: python -m build
+      - name: Build package with Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          run: python -m build -w
 
       - name: Create Release
         uses: actions/create-release@v1

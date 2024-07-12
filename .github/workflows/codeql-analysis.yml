@@ -58,10 +58,6 @@ jobs:
           # Set the `CODEQL-PYTHON` environment variable to the Python executable
           # that includes the dependencies
           echo "CODEQL_PYTHON=$(which python)" >> $GITHUB_ENV
-      # prepare requirements
-      - name: Prepare environments
-        run: |
-          sudo apt-get install -y libboost-python-dev
 
       # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
       # If this step fails, then you should remove it and run the build manually (see below)
