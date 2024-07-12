@@ -1,12 +1,29 @@
-
-#include <boost/python.hpp>
+#include <Python.h>
 int64_t mp_append_log(const char * logfile, const char * logs, int len);
-using namespace boost::python;
-int64_t mp_append_log_wrapper(const char * logfile, std::string const &logs){
-    return mp_append_log(logfile, logs.c_str(), logs.length());
+
+static PyObject* mp_append_log_wrapper(PyObject* self, PyObject* args) {
+    const char* filename;
+    const char* logs;
+    if (!PyArg_ParseTuple(args, "ss", &filename, &logs)) {
+        return NULL;
+    }
+    int64_t result = mp_append_log(filename, logs, strlen(logs));
+    return PyLong_FromLong(result);
 }
 
-BOOST_PYTHON_MODULE (tools) {
-//    def("mp_append_log", &mp_append_log, (arg("logfile"), arg("logs") , arg("size")),"append content to logfile");
-    def("mp_append_log", &mp_append_log_wrapper, "append content to logfile");
+static PyMethodDef Methods[] = {
+    {"mp_append_log",  mp_append_log_wrapper, METH_VARARGS, "append content to logfile"},
+    {NULL, NULL, 0, NULL}        /* Sentinel */
+};
+static struct PyModuleDef tools = {
+    PyModuleDef_HEAD_INIT,
+    "tools",   /* name of module */
+    NULL, /* module documentation, may be NULL */
+    -1,       /* size of per-interpreter state of the module,
+                 or -1 if the module keeps state in global variables. */
+    Methods
+};
+
+PyMODINIT_FUNC PyInit_tools(void) {
+    return PyModule_Create(&tools);
 }

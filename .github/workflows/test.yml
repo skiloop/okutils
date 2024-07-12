@@ -23,13 +23,15 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Install
         run: |
           sudo apt-get install -y libboost-python-dev
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-tests.txt
-          echo "PYTHONPATH=./tests/:$PYTHONPATH" >> $GITHUB_ENV
+          mkdir tmp && pip install .
+          cd tmp && ln -s ../tests .
       - name: Tests
         run: |
+          cd tmp 
           python -m unittest discover -s tests -p '*_tests.py' -v

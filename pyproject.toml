@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "okutils"
-version = "1.0.0"
+version = "1.0.1"
 description = "a python utils"
 license = { text = "MIT License" }
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -15,16 +15,17 @@ authors = [
 ]
 
 classifiers = [
-    'Operating System :: MacOS :: MacOS X',
-    'Operating System :: POSIX :: Linux',
-    'License :: OSI Approved :: MIT License',
-    'Programming Language :: Python',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Topic :: Utilities",
-    'Topic :: Software Development :: Libraries :: Python Modules',
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 requires-python = ">=3.7"
 
