@@ -1,3 +1,6 @@
+from typing import List, Set, Generator, Dict
+
+
 def group_by(collection: List | Set | Generator, key: callable) -> Dict[str, List]:
     """
     group elements from collection
