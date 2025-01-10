@@ -1,13 +1,16 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 int64_t mp_append_log(const char * logfile, const char * logs, int len);
 
 static PyObject* mp_append_log_wrapper(PyObject* self, PyObject* args) {
     const char* filename;
     const char* logs;
-    if (!PyArg_ParseTuple(args, "ss", &filename, &logs)) {
+    Py_ssize_t len;
+    if (!PyArg_ParseTuple(args, "sy#", &filename, &logs, &len)) {
         return NULL;
     }
-    int64_t result = mp_append_log(filename, logs, strlen(logs));
+
+    int64_t result = mp_append_log(filename, logs, (int)len);
     return PyLong_FromLong(result);
 }
 

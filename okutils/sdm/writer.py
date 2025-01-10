@@ -1,10 +1,11 @@
-import gzip
-import io
 import json
 import os
 import struct
 from pathlib import Path
+
 from okutils.tools import mp_append_log
+
+from okutils.sdm.encoders import gzip_compress
 
 
 class Writer:
@@ -19,12 +20,8 @@ class Writer:
             value = value.encode()
         elif isinstance(value, (dict,)):
             value = json.dumps(value, ensure_ascii=False).encode()
-        if self.__compress:
-            fo = io.BytesIO()
-            with gzip.GzipFile(fileobj=fo, mode='wb') as f:
-                f.write(value)
-            r = fo.getvalue()
-            fo.close()
+        if self.encoder:
+            r = self.encoder(value)
         else:
             r = value
         return struct.pack("I", len(name)) + name + struct.pack("I", len(r)) + r
@@ -33,9 +30,9 @@ class Writer:
         path = Path(os.path.dirname(self._fn))
         path.mkdir(parents=True, exist_ok=True)
 
-    def __init__(self, fn, compress=True):
+    def __init__(self, fn, encoder=gzip_compress):
         self._fn = fn
-        self.__compress = compress
+        self.encoder = encoder
         self.__mkdir__()
 
     def append(self, name, value):

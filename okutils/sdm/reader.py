@@ -1,18 +1,18 @@
-import gzip
-import io
 import os
 import struct
 import threading
 
+from okutils.sdm.decoders import gzip_decompress
+
 
 class Reader:
-    def __init__(self, fn, decompress=True):
+    def __init__(self, fn, decoder=None):
         self._fsz = float(os.path.getsize(fn))
         self._nread = 0
         self.fn = fn
         self.fd = open(fn, 'rb')
         self.lock = threading.Lock()
-        self.__decompress = decompress
+        self.decoder = gzip_decompress if decoder is None else decoder
 
     def __del__(self):
         self.fd.close()
@@ -36,17 +36,12 @@ class Reader:
         if key_only:
             self.fd.seek(sz, 1)
             return fn, None
-        gzconn = self.fd.read(sz)
-        if len(gzconn) != sz:
+        conn = self.fd.read(sz)
+        if len(conn) != sz:
             raise IOError('invalid file')
         self._nread += sz + 4
-        if self.__decompress:
-            fin = io.BytesIO(gzconn)
-            with gzip.GzipFile(fileobj=fin, mode='rb') as f:
-                conn = f.read()
-            fin.close()
-        else:
-            conn = gzconn
+        if self.decoder:
+            conn = self.decoder(conn)
         return fn, conn
 
     def progress(self):
