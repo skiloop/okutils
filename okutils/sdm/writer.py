@@ -3,9 +3,8 @@ import os
 import struct
 from pathlib import Path
 
+from okutils.sdm.encoders import gzip_compress_by_zlib
 from okutils.tools import mp_append_log
-
-from okutils.sdm.encoders import gzip_compress
 
 
 class Writer:
@@ -30,7 +29,7 @@ class Writer:
         path = Path(os.path.dirname(self._fn))
         path.mkdir(parents=True, exist_ok=True)
 
-    def __init__(self, fn, encoder=gzip_compress):
+    def __init__(self, fn, encoder=gzip_compress_by_zlib):
         self._fn = fn
         self.encoder = encoder
         self.__mkdir__()

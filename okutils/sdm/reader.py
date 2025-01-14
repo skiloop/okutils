@@ -12,7 +12,7 @@ class Reader:
         self.fn = fn
         self.fd = open(fn, 'rb')
         self.lock = threading.Lock()
-        self.decoder = gzip_decompress if decoder is None else decoder
+        self.decoder = gzip_decompress_by_zlib if decoder is None else decoder
 
     def __del__(self):
         self.fd.close()
