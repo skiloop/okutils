@@ -2,7 +2,13 @@ import os
 import struct
 import threading
 
-from okutils.sdm.decoders import gzip_decompress
+from okutils.sdm.decoders import brotli_decompress, gzip_decompress_by_zlib
+
+
+def get_decompresser(filename: str):
+    if filename.endswith(".br.bin"):
+        return brotli_decompress
+    return gzip_decompress_by_zlib
 
 
 class Reader:
@@ -12,7 +18,7 @@ class Reader:
         self.fn = fn
         self.fd = open(fn, 'rb')
         self.lock = threading.Lock()
-        self.decoder = gzip_decompress_by_zlib if decoder is None else decoder
+        self.decoder = get_decompresser(fn) if decoder is None else decoder
 
     def __del__(self):
         self.fd.close()
@@ -74,3 +80,13 @@ class Reader:
         """
         for key, value in self.iter():
             action(key.decode(), value)
+
+
+class BrotliReader(Reader):
+    """
+    for convinionous
+    """
+
+    def __init__(self, filename: str, path: str = None):
+        fn = os.path.join(path or ".", filename + ".br.bin")
+        super().__init__(fn, brotli_decompress)

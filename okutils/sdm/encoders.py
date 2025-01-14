@@ -4,6 +4,8 @@ import struct
 import time
 import zlib
 
+from brotli import compress as _brotli_compress
+
 
 def gzip_compress(raw: bytes):
     with io.BytesIO() as fo:
@@ -43,3 +45,12 @@ def gzip_compress_by_zlib(data: bytes):
     # 压缩数据并关闭流
     gzip_data = compress.compress(data) + compress.flush()
     return gzip_data
+
+
+def brotli_compress(data: bytes) -> bytes:
+    """
+    compress by brotli
+    :param data: raw data
+    :return:
+    """
+    return _brotli_compress(data)

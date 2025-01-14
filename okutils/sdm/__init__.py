@@ -1,5 +1,4 @@
+from .reader import Reader, BrotliReader
+from .writer import Writer, BrotliWriter
 
-from .reader import Reader
-from .writer import Writer
-
-__all__=['Reader', 'Writer']
+__all__ = ['Reader', 'Writer', 'BrotliReader', 'BrotliWriter']

@@ -3,8 +3,8 @@ import tempfile
 import unittest
 
 from okutils.sdm import Reader
-from okutils.sdm.decoders import gzip_decompress, gzip_decompress_by_zlib
-from okutils.sdm.encoders import gzip_compress, gzip_compress_by_zlib
+from okutils.sdm.decoders import gzip_decompress, gzip_decompress_by_zlib, brotli_decompress
+from okutils.sdm.encoders import gzip_compress, gzip_compress_by_zlib, brotli_compress
 from tests.utils import random_string, write_items
 
 
@@ -35,6 +35,9 @@ class SDMTestCase(unittest.TestCase):
 
     def test_zlib_coder(self):
         check_coders(self, "zlib", gzip_compress_by_zlib, gzip_decompress_by_zlib)
+
+    def test_brotli_coder(self):
+        check_coders(self, "brotli", brotli_compress, brotli_decompress)
 
 
 if __name__ == '__main__':

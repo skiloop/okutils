@@ -3,8 +3,14 @@ import os
 import struct
 from pathlib import Path
 
-from okutils.sdm.encoders import gzip_compress_by_zlib
+from okutils.sdm.encoders import gzip_compress_by_zlib, brotli_compress
 from okutils.tools import mp_append_log
+
+
+def get_compresser(filename: str):
+    if filename.endswith(".br.bin"):
+        return brotli_compress
+    return gzip_compress_by_zlib
 
 
 class Writer:
@@ -29,7 +35,9 @@ class Writer:
         path = Path(os.path.dirname(self._fn))
         path.mkdir(parents=True, exist_ok=True)
 
-    def __init__(self, fn, encoder=gzip_compress_by_zlib):
+    def __init__(self, fn, encoder=None):
+        if encoder is None:
+            encoder = get_compresser(fn)
         self._fn = fn
         self.encoder = encoder
         self.__mkdir__()
@@ -61,3 +69,13 @@ class Writer:
         filename = os.path.abspath(self.filename())
         size = os.path.getsize(filename)
         return size
+
+
+class BrotliWriter(Writer):
+    """
+    for convinionous
+    """
+
+    def __init__(self, filename: str, path: str = None):
+        fn = os.path.join(path or ".", filename + ".br.bin")
+        super().__init__(fn, brotli_compress)

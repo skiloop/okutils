@@ -2,6 +2,8 @@ import gzip
 import io
 import zlib
 
+from brotli import decompress as _brotli_decompress
+
 
 def gzip_decompress(gz_content):
     with io.BytesIO(gz_content) as fin:
@@ -20,3 +22,12 @@ def gzip_decompress_by_zlib(gz_content):
     if is_gzip_data(gz_content):
         gz_content = gz_content[10:-8]
     return zlib.decompress(gz_content, wbits=-zlib.MAX_WBITS)
+
+
+def brotli_decompress(data: bytes) -> bytes:
+    """
+    decompress by brotli
+    :param data: brotli compressed data
+    :return:
+    """
+    return _brotli_decompress(data)
