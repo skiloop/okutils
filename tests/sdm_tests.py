@@ -5,7 +5,7 @@ import unittest
 from okutils.sdm import Reader
 from okutils.sdm.decoders import gzip_decompress, gzip_decompress_by_zlib, brotli_decompress
 from okutils.sdm.encoders import gzip_compress, gzip_compress_by_zlib, brotli_compress
-from tests.utils import random_string, write_items
+from utils import random_string, write_items
 
 
 def check_coders(test: unittest.TestCase, name, encoder, decoder):
