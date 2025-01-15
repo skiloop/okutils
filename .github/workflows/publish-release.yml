@@ -52,7 +52,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
-        python-version: [ "3.8", "3.11" ]
+        python-version: [ "3.8", "3.11", "3.12" ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Build package with Python ${{ matrix.python-version }}
