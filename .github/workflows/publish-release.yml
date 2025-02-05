@@ -43,22 +43,20 @@ jobs:
         run: |
           cd tests
           python -m unittest discover -p '*_tests.py' -v
-      - name: Build package with Python ${{ matrix.python-version }}
-        run: python -m build
-      - name: Upload wheels as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: okutils-${{ matrix.os }}-${{ matrix.python-version }}
-          path: dist/*
   publish:
     needs: build  # 确保 build 任务完成后再发布
     runs-on: ubuntu-latest
     steps:
-      - name: Download all built wheels
-        uses: actions/download-artifact@v4
-        with:
-          pattern: okutils-*
-          path: out/
+      - name: Install dependencies [Linux]
+        run: |
+          python -m pip install --upgrade pip
+          pip install build setuptools wheel cibuildwheel
+          pip install -r requirements.txt
+      - name: Build package with Python
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_SKIP: pp*
+        run: python -m cibuildwheel --output-dir dist
       - name: Display downloaded files
         run: ls -R out/ |
           mkdir -p dist |
