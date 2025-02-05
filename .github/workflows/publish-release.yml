@@ -43,13 +43,8 @@ jobs:
         run: |
           cd tests
           python -m unittest discover -p '*_tests.py' -v
-      - name: Set CIBW_BUILD
-        run: echo "CIBW_BUILD=cp$(python -c 'import sys; print(f"{sys.version_info[0]}{sys.version_info[1]}")')-*" >> $GITHUB_ENV
-
       - name: Build package with Python ${{ matrix.python-version }}
-        env:
-          CIBW_REPAIR_WHEEL_COMMAND: ""
-        run: python -m cibuildwheel --output-dir dist
+        run: python -m build
       - name: Upload wheels as artifact
         uses: actions/upload-artifact@v4
         with:
