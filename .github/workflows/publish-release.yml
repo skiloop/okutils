@@ -48,7 +48,7 @@ jobs:
       - name: Upload wheels as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}-${{ matrix.python-version }}
+          name: okutils-${{ matrix.os }}-${{ matrix.python-version }}
           path: dist/*
   publish:
     needs: build  # 确保 build 任务完成后再发布
@@ -57,8 +57,10 @@ jobs:
       - name: Download all built wheels
         uses: actions/download-artifact@v4
         with:
-          path: dist
-
+          pattern: okutils-*
+          path: dist/
+      - name: Display downloaded files
+        run: ls -R dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
