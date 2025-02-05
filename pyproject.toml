@@ -32,3 +32,10 @@ requires-python = ">=3.7"
 [project.urls]
 homepage = "https://github.com/skiloop/okutils"
 repository = "https://github.com/skiloop/okutils"
+
+[tool.setuptools]
+platforms = ["x86_64", "aarch64"]
+
+[tool.cibuildwheel]
+archs = "x86_64"
+skip = "*i686 *win32 *armv7l"

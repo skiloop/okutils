@@ -7,6 +7,7 @@
 #include <windows.h>
 typedef struct _stat64 FStat;
 #else
+#include <fcntl.h>
 #include <sys/file.h>
 #include <unistd.h>
 typedef struct stat FStat;
