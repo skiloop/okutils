@@ -58,9 +58,7 @@ jobs:
           CIBW_SKIP: pp*
         run: python -m cibuildwheel --output-dir dist
       - name: Display downloaded files
-        run: ls -R out/ |
-          mkdir -p dist |
-          find out/ -type f -exec mv -f {} dist/ \;
+        run: ls -R dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
