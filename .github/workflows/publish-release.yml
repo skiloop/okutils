@@ -47,6 +47,7 @@ jobs:
       - name: Build package with Python ${{ matrix.python-version }}
         env:
           CIBW_REPAIR_WHEEL_COMMAND: ""
+          CIBW_BUILD: "cp${{ matrix.python-version }}-*"
         run: python -m cibuildwheel --output-dir dist
       - name: Upload wheels as artifact
         uses: actions/upload-artifact@v4
