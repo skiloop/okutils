@@ -45,7 +45,7 @@ jobs:
           python -m unittest discover -p '*_tests.py' -v
       - uses: actions/checkout@v3
 
-  release:
+  publish:
     permissions:
       contents: write
 
@@ -61,6 +61,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           run: python -m build -w
 
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+
+  release:
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+    steps:
       - name: Create Release
         uses: actions/create-release@v1
         env:
@@ -71,9 +83,5 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Publish package
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
 
 
