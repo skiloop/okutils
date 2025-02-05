@@ -45,6 +45,8 @@ jobs:
           python -m unittest discover -p '*_tests.py' -v
 
       - name: Build package with Python ${{ matrix.python-version }}
+        env:
+          CIBW_REPAIR_WHEEL_COMMAND: ""
         run: python -m cibuildwheel --output-dir dist
       - name: Upload wheels as artifact
         uses: actions/upload-artifact@v4
