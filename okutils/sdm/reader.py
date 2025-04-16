@@ -1,11 +1,17 @@
 import os
 import struct
 import threading
+from typing import Callable, Tuple, Any, Iterable
 
 from okutils.sdm.decoders import brotli_decompress, gzip_decompress_by_zlib
 
 
 def get_decompresser(filename: str):
+    """
+
+    :param filename: bin file
+    :return:
+    """
     if filename.endswith(".br.bin"):
         return brotli_decompress
     return gzip_decompress_by_zlib
@@ -17,13 +23,16 @@ class Reader:
         self._nread = 0
         self.fn = fn
         self.fd = open(fn, 'rb')
+        # lock to avaid file pointer chaos
         self.lock = threading.Lock()
         self.decoder = get_decompresser(fn) if decoder is None else decoder
 
     def __del__(self):
         self.fd.close()
 
-    def _readone_i(self, key_only=False):
+    def _readone_i(self, key_only=False, decoder=None):
+        if decoder is None:
+            decoder = self.decoder
         sz0 = self.fd.read(4)
         if len(sz0) == 0:
             return None, None
@@ -46,25 +55,46 @@ class Reader:
         if len(conn) != sz:
             raise IOError('invalid file')
         self._nread += sz + 4
-        if self.decoder:
-            conn = self.decoder(conn)
+        if decoder:
+            conn = decoder(conn)
         return fn, conn
 
-    def progress(self):
+    def progress(self) -> float:
+        """
+        current reading progress
+        :return:
+        """
         if self._fsz == 0.0:
             return 1.0
         return float(self._nread) / self._fsz
 
-    def readone(self, key_only=False):
+    def readone(self, key_only=False, decoder: "Callable" = None) -> Tuple[bytes, Any]:
+        """
+        read a document from file
+        :param key_only: just return document key,and content set to none,
+                file pointer set to next document
+        :param decoder: content decoder, if None use default decoder
+        :return: (key, content), content type is the same decoder return type
+        """
         with self.lock:
-            return self._readone_i(key_only)
+            return self._readone_i(key_only, decoder)
 
-    def readone_at(self, pos):
+    def readone_at(self, pos) -> Tuple[bytes, Any]:
+        """
+        read document at specified position
+        :param pos: document position
+        :return:  (key, content)
+        """
         with self.lock:
             self.fd.seek(pos)
             return self._readone_i()
 
-    def iter(self, key_only=False):
+    def iter(self, key_only=False) -> Iterable[Tuple[bytes, Any]]:
+        """
+        iter bin file
+        :param key_only: read key only, ignore content
+        :return: iterable of (key, content)
+        """
         while True:
             key, value = self.readone(key_only)
             if key is None:

@@ -1,3 +1,4 @@
+import atexit
 import json
 import os.path
 import time
@@ -33,10 +34,6 @@ class JsonHash(HashBase):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.save()
-
-    def __del__(self):
-        self.save()
-        super.__del__()
 
     def set(self, name: (str, bytes), value):
         self._cache[name] = value
