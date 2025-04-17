@@ -3,18 +3,7 @@ import struct
 import threading
 from typing import Callable, Tuple, Any, Iterable
 
-from okutils.sdm.decoders import brotli_decompress, gzip_decompress_by_zlib
-
-
-def get_decompresser(filename: str):
-    """
-
-    :param filename: bin file
-    :return:
-    """
-    if filename.endswith(".br.bin"):
-        return brotli_decompress
-    return gzip_decompress_by_zlib
+from .decoders import brotli_decompress, get_decompresser
 
 
 class Reader:
@@ -29,6 +18,12 @@ class Reader:
 
     def __del__(self):
         self.fd.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.fd.close()
+
+    def __enter__(self):
+        return self
 
     def _readone_i(self, key_only=False, decoder=None):
         if decoder is None:

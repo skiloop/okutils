@@ -31,3 +31,14 @@ def brotli_decompress(data: bytes) -> bytes:
     :return:
     """
     return _brotli_decompress(data)
+
+
+def get_decompresser(filename: str):
+    """
+
+    :param filename: bin file
+    :return:
+    """
+    if filename.endswith(".br.bin"):
+        return brotli_decompress
+    return gzip_decompress_by_zlib
