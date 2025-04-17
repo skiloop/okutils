@@ -1,7 +1,10 @@
 #!/bin/env python
 # -*- coding:utf8 -*-
 import sys
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 from setuptools import find_packages, setup, Extension
 
 include_dirs, library_dirs = [], []
