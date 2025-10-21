@@ -76,7 +76,6 @@ class Reader:
         :param kwargs:
         :return:
         """
-        original_pos = self.fd.tell()
         offset = kwargs.get('offset')
         if offset is not None:
             self.fd.seek(offset, 1)
@@ -89,18 +88,23 @@ class Reader:
         if pattern is not None:
             pattern = re.compile(pattern)
         decoder = kwargs.get('decoder', self.decoder)
+        # print("start seek_next from position: ", current_pos)
         while True:
             key = self._check_if_next_is_key(max_key_size, pattern)
             if key is not None:
+                # print(f"found key, current_pos: {current_pos}, key: {key}")
                 value = self._check_if_next_is_value(max_value_size, decoder)
                 if value is not None:
                     found = True
+                    # print(f"found, current_pos: {current_pos}, key: {key}, value: {value}")
                     break
             current_pos += 1
+            # if current_pos % 1000 == 0:
+            #     # print(f"current_pos: {current_pos}, _fsz: {self._fsz}")
             if current_pos > self._fsz:
+                # print(f"end of file, current_pos: {current_pos}, _fsz: {self._fsz}")
                 break
             self.fd.seek(current_pos)
-        self.fd.seek(original_pos)
         if not found:
             return None
         return current_pos
@@ -124,7 +128,7 @@ class Reader:
         if len(sz0) == 0 or len(sz0) != 4:
             return None
         (sz,) = struct.unpack("I", sz0)
-        if sz > max_value_size:
+        if sz > max_value_size > 0:
             return None
         conn = self.fd.read(sz)
         if len(conn) != sz:

@@ -8,7 +8,7 @@ import unittest
 from okutils.sdm import Reader, Writer, AsyncReader
 from okutils.sdm.decoders import gzip_decompress, gzip_decompress_by_zlib, brotli_decompress
 from okutils.sdm.encoders import gzip_compress, gzip_compress_by_zlib, brotli_compress
-from utils import random_string, write_items
+from tests.utils import random_string, write_items
 
 tracemalloc.start()
 
@@ -28,6 +28,13 @@ def create_bin(filename, data):
     for key, value in data:
         writer.append(key, value)
 
+def create_random_bin(filename):
+    count = random.randint(10, 20)
+    data = [(random_string(10).encode(), random_string(random.randint(50, 200)).encode()) for _ in range(count)]
+    writer = Writer(filename)
+    for key, value in data:
+        writer.append(key, value)
+    return count
 
 def check_coders(test: unittest.TestCase, name, encoder, decoder):
     items = [
@@ -71,6 +78,23 @@ class SDMTestCase(unittest.TestCase):
                 k, v = next(kv_iter)
                 self.assertEqual(key, k)
                 self.assertEqual(value, v)
+        remove_file(filename)
+    
+    def test_seek_next(self):
+        filename = get_temple_file()
+        count = create_random_bin(filename)
+        reader = Reader(filename)
+        for _ in range(random.randint(1, count)):
+            pos = reader.fd.tell()
+            key, value = reader.readone()
+        print(f"pos: {pos}, key: {key}, value: {value}")
+        reader.fd.seek(0)
+        doc_pos = reader.seek_next(max_key_size=15)
+        self.assertIsNotNone(doc_pos)
+        doc_key, doc_value = reader.readone_at(doc_pos)
+        self.assertEqual(doc_pos, pos)
+        self.assertEqual(doc_key, key)
+        self.assertEqual(doc_value, value)
         remove_file(filename)
 
     def test_async_read(self):
