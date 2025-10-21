@@ -1,4 +1,5 @@
 import os
+import re
 import struct
 import threading
 from typing import Callable, Tuple, Any, Iterable
@@ -7,6 +8,9 @@ from .decoders import brotli_decompress, get_decompresser
 
 
 class Reader:
+    DEFAULT_MAX_KEY_SIZE = 1024
+    DEFAULT_MAX_VALUE_SIZE = 0
+
     def __init__(self, fn, decoder=None):
         self._fsz = float(os.path.getsize(fn))
         self._nread = 0
@@ -53,6 +57,81 @@ class Reader:
         if decoder:
             conn = decoder(conn)
         return fn, conn
+
+    def seek_next(self, **kwargs):
+        """
+        seek to next document
+        :param kwargs:
+        :return:
+        """
+        original_pos = self.fd.tell()
+        try:
+            return self._seek_next_i(**kwargs)
+        finally:
+            self.fd.seek(original_pos)
+
+    def _seek_next_i(self, **kwargs):
+        """
+        seek to next document
+        :param kwargs:
+        :return:
+        """
+        original_pos = self.fd.tell()
+        offset = kwargs.get('offset')
+        if offset is not None:
+            self.fd.seek(offset, 1)
+        current_pos = self.fd.tell()
+        found = False
+        max_key_size = kwargs.get('max_key_size', self.DEFAULT_MAX_KEY_SIZE)
+        max_value_size = kwargs.get(
+            'max_value_size', self.DEFAULT_MAX_VALUE_SIZE)
+        pattern = kwargs.get('pattern', None)
+        if pattern is not None:
+            pattern = re.compile(pattern)
+        decoder = kwargs.get('decoder', self.decoder)
+        while True:
+            key = self._check_if_next_is_key(max_key_size, pattern)
+            if key is not None:
+                value = self._check_if_next_is_value(max_value_size, decoder)
+                if value is not None:
+                    found = True
+                    break
+            current_pos += 1
+            if current_pos > self._fsz:
+                break
+            self.fd.seek(current_pos)
+        self.fd.seek(original_pos)
+        if not found:
+            return None
+        return current_pos
+
+    def _check_if_next_is_key(self, max_key_size: int, key_pattern: re.Pattern):
+        sz0 = self.fd.read(4)
+        if len(sz0) == 0 or len(sz0) != 4:
+            return None
+        (sz,) = struct.unpack("I", sz0)
+        if sz > max_key_size:
+            return None
+        fn = self.fd.read(sz)
+        if len(fn) != sz:
+            return None
+        if key_pattern is not None and not key_pattern.match(fn):
+            return None
+        return fn
+
+    def _check_if_next_is_value(self, max_value_size: int, decoder: "Callable"):
+        sz0 = self.fd.read(4)
+        if len(sz0) == 0 or len(sz0) != 4:
+            return None
+        (sz,) = struct.unpack("I", sz0)
+        if sz > max_value_size:
+            return None
+        conn = self.fd.read(sz)
+        if len(conn) != sz:
+            return None
+        if decoder is not None:
+            conn = decoder(conn)
+        return conn
 
     def progress(self) -> float:
         """
