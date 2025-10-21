@@ -1,7 +1,6 @@
 #!/bin/env python
 # -*- coding:utf8 -*-
 import sys
-
 from setuptools import find_packages, setup, Extension
 
 include_dirs, library_dirs = [], []

@@ -2,6 +2,7 @@ import atexit
 import json
 import os.path
 import time
+import atexit
 
 from okutils.hash.hashbase import HashBase
 
