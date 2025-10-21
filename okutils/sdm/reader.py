@@ -1,8 +1,11 @@
 import os
 import re
 import struct
+import sys
 import threading
 from typing import Callable, Tuple, Any, Iterable
+import zlib
+import brotli
 
 from .decoders import brotli_decompress, get_decompresser
 
@@ -78,7 +81,7 @@ class Reader:
         """
         offset = kwargs.get('offset')
         if offset is not None:
-            self.fd.seek(offset, 1)
+            self.fd.seek(offset)
         current_pos = self.fd.tell()
         found = False
         max_key_size = kwargs.get('max_key_size', self.DEFAULT_MAX_KEY_SIZE)
@@ -90,14 +93,18 @@ class Reader:
         decoder = kwargs.get('decoder', self.decoder)
         # print("start seek_next from position: ", current_pos)
         while True:
-            key = self._check_if_next_is_key(max_key_size, pattern)
-            if key is not None:
-                # print(f"found key, current_pos: {current_pos}, key: {key}")
-                value = self._check_if_next_is_value(max_value_size, decoder)
-                if value is not None:
-                    found = True
-                    # print(f"found, current_pos: {current_pos}, key: {key}, value: {value}")
-                    break
+            try:
+                key = self._check_if_next_is_key(max_key_size, pattern)
+                if key is not None:
+                    # print(f"found key, current_pos: {current_pos}, key: {key}")
+                    value = self._check_if_next_is_value(max_value_size, decoder)
+                    if value is not None:
+                        found = True
+                        # print(f"found, current_pos: {current_pos}, key: {key}, value: {value}")
+                        break
+            except (brotli.error, zlib.error, UnicodeDecodeError):
+                # print(f"seek error: {e}, seek to next document", file=sys.stderr)
+                pass
             current_pos += 1
             # if current_pos % 1000 == 0:
             #     # print(f"current_pos: {current_pos}, _fsz: {self._fsz}")
@@ -155,7 +162,21 @@ class Reader:
         :return: (key, content), content type is the same decoder return type
         """
         with self.lock:
-            return self._readone_i(key_only, decoder)
+            original_pos = self.fd.tell()
+            try:
+                return self._readone_i(key_only, decoder)
+            except (IOError, zlib.error) as e:
+                print(f"read error: {e}, seek to next document", file=sys.stderr)
+                pos = self._seek_next_i(offset=original_pos)
+                if pos is None:
+                    print("no next document, return None", file=sys.stderr)
+                    return None, None
+                print(f"next document found at position: {pos}", file=sys.stderr)
+                self.fd.seek(pos)
+                self._nread = pos
+                return self._readone_i(key_only, decoder)
+            except Exception as e:
+                raise e
 
     def readone_at(self, pos) -> Tuple[bytes, Any]:
         """

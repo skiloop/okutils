@@ -88,14 +88,20 @@ class SDMTestCase(unittest.TestCase):
             pos = reader.fd.tell()
             key, value = reader.readone()
         print(f"pos: {pos}, key: {key}, value: {value}")
-        reader.fd.seek(0)
+        reader.fd.seek(pos - 13)
         doc_pos = reader.seek_next(max_key_size=15)
         self.assertIsNotNone(doc_pos)
         doc_key, doc_value = reader.readone_at(doc_pos)
         self.assertEqual(doc_pos, pos)
         self.assertEqual(doc_key, key)
         self.assertEqual(doc_value, value)
+        # test read next on wrong position
+        reader.fd.seek(pos - 23)
+        doc_key, doc_value = reader.readone()
+        self.assertEqual(doc_key, key, "failed to read on wrong position, key not match")
+        self.assertEqual(doc_value, value, "failed to read on wrong position, value not match")
         remove_file(filename)
+
 
     def test_async_read(self):
         asyncio.run(self._async_read())
