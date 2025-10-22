@@ -13,6 +13,7 @@ from .decoders import brotli_decompress, get_decompresser
 class Reader:
     DEFAULT_MAX_KEY_SIZE = 1024
     DEFAULT_MAX_VALUE_SIZE = 0
+    VERBOSE = False
 
     def __init__(self, fn, decoder=None):
         self._fsz = float(os.path.getsize(fn))
@@ -31,6 +32,11 @@ class Reader:
 
     def __enter__(self):
         return self
+    
+    @staticmethod
+    def log(msg, *args, **kwargs):
+        if Reader.VERBOSE:
+            print(msg, *args, **kwargs)
 
     def _readone_i(self, key_only=False, decoder=None):
         if decoder is None:
@@ -91,25 +97,25 @@ class Reader:
         if pattern is not None:
             pattern = re.compile(pattern)
         decoder = kwargs.get('decoder', self.decoder)
-        # print("start seek_next from position: ", current_pos)
+        self.log("start seek_next from position: ", current_pos, file=sys.stderr)
         while True:
             try:
                 key = self._check_if_next_is_key(max_key_size, pattern)
                 if key is not None:
-                    # print(f"found key, current_pos: {current_pos}, key: {key}")
+                    self.log("found key, current_pos: %d, key: %s", current_pos, key, file=sys.stderr)
                     value = self._check_if_next_is_value(max_value_size, decoder)
                     if value is not None:
                         found = True
-                        # print(f"found, current_pos: {current_pos}, key: {key}, value: {value}")
+                        self.log("found, current_pos: %d, key: %s, value: %s", current_pos, key, value[:30], file=sys.stderr)
                         break
-            except (brotli.error, zlib.error, UnicodeDecodeError):
-                # print(f"seek error: {e}, seek to next document", file=sys.stderr)
+            except (brotli.error, zlib.error, UnicodeDecodeError) as e:
+                self.log("seek error: %s, seek to next document", e, file=sys.stderr)
                 pass
             current_pos += 1
-            # if current_pos % 1000 == 0:
-            #     # print(f"current_pos: {current_pos}, _fsz: {self._fsz}")
+            if current_pos % 1000 == 0:
+                self.log("current_pos: %d, _fsz: %d", current_pos, self._fsz, file=sys.stderr)
             if current_pos > self._fsz:
-                # print(f"end of file, current_pos: {current_pos}, _fsz: {self._fsz}")
+                self.log("end of file, current_pos: %d, _fsz: %d", current_pos, self._fsz, file=sys.stderr)
                 break
             self.fd.seek(current_pos)
         if not found:
