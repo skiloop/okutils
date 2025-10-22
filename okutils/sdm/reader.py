@@ -94,7 +94,7 @@ class Reader:
         max_value_size = kwargs.get(
             'max_value_size', self.DEFAULT_MAX_VALUE_SIZE)
         pattern = kwargs.get('pattern', None)
-        if pattern is not None:
+        if pattern is not None and not isinstance(pattern, re.Pattern):
             pattern = re.compile(pattern)
         decoder = kwargs.get('decoder', self.decoder)
         self.log("start seek_next from position: ", current_pos, file=sys.stderr)
@@ -110,7 +110,6 @@ class Reader:
                         break
             except (brotli.error, zlib.error, UnicodeDecodeError) as e:
                 self.log("seek error: %s, seek to next document", e, file=sys.stderr)
-                pass
             current_pos += 1
             if current_pos % 1000 == 0:
                 self.log("current_pos: %d, _fsz: %d", current_pos, self._fsz, file=sys.stderr)
@@ -159,21 +158,25 @@ class Reader:
             return 1.0
         return float(self._nread) / self._fsz
 
-    def readone(self, key_only=False, decoder: "Callable" = None) -> Tuple[bytes, Any]:
+    def readone(self, **kwargs) -> Tuple[bytes, Any]:
         """
         read a document from file
         :param key_only: just return document key,and content set to none,
                 file pointer set to next document
         :param decoder: content decoder, if None use default decoder
+        :param pattern: pattern to match key, if None use default pattern
         :return: (key, content), content type is the same decoder return type
         """
+        key_only = kwargs.get('key_only', False)
+        decoder = kwargs.get('decoder', None)
+        pattern = kwargs.get('pattern', None)
         with self.lock:
             original_pos = self.fd.tell()
             try:
                 return self._readone_i(key_only, decoder)
             except (IOError, zlib.error) as e:
                 print(f"read error: {e}, seek to next document", file=sys.stderr)
-                pos = self._seek_next_i(offset=original_pos)
+                pos = self._seek_next_i(offset=original_pos, pattern=pattern)
                 if pos is None:
                     print("no next document, return None", file=sys.stderr)
                     return None, None
@@ -194,14 +197,15 @@ class Reader:
             self.fd.seek(pos)
             return self._readone_i()
 
-    def iter(self, key_only=False) -> Iterable[Tuple[bytes, Any]]:
+    def iter(self, **kwargs) -> Iterable[Tuple[bytes, Any]]:
         """
         iter bin file
         :param key_only: read key only, ignore content
+        :param pattern: pattern to match key, if None use default pattern
         :return: iterable of (key, content)
         """
         while True:
-            key, value = self.readone(key_only)
+            key, value = self.readone(**kwargs)
             if key is None:
                 break
             yield key, value
