@@ -133,24 +133,24 @@ class Reader:
         if pattern is not None and not isinstance(pattern, re.Pattern):
             pattern = re.compile(pattern)
         decoder = kwargs.get('decoder', self.decoder)
-        self.log("start seek_next from position: ", current_pos)
+        self.log("start seek_next from position: {}", current_pos)
         while True:
             try:
                 key = self._check_if_next_is_key(max_key_size, pattern)
                 if key is not None:
-                    self.log("found key, current_pos: %d, key: %s", current_pos, key)
+                    self.log("found key, current_pos: {}, key: {}", current_pos, key)
                     value = self._check_if_next_is_value(max_value_size, decoder)
                     if value is not None:
                         found = True
-                        self.log("found, current_pos: %d, key: %s, value: %s", current_pos, key, value[:30])
+                        self.log("found, current_pos: {}, key: {}, value: {}", current_pos, key, value[:30])
                         break
             except (brotli.error, zlib.error, UnicodeDecodeError) as e:
-                self.log("seek error: %s, seek to next document", e)
+                self.log("seek error: {}, seek to next document", e)
             current_pos += 1
             if current_pos % 1000 == 0:
-                self.log("current_pos: %d, _fsz: %d", current_pos, self._fsz)
+                self.log("current_pos: {}, _fsz: {}", current_pos, self._fsz)
             if current_pos > self._fsz:
-                self.log("end of file, current_pos: %d, _fsz: %d", current_pos, self._fsz)
+                self.log("end of file, current_pos: {}, _fsz: {}", current_pos, self._fsz)
                 break
             self.fd.seek(current_pos)
         if not found:
