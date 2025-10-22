@@ -68,7 +68,7 @@ class Reader:
     @staticmethod
     def log(msg, *args, **kwargs):
         if Reader.VERBOSE:
-            print(msg, *args, **kwargs)
+            print(msg.format(*args, **kwargs), file=sys.stderr)
 
     def _readone_i(self, key_only=False, decoder=None, pattern=None):
         if decoder is None:
@@ -83,8 +83,11 @@ class Reader:
         if len(fn) != sz:
             raise InvalidFileError('invalid file')
         self._nread += sz + 4
-        if pattern is not None and not pattern.match(fn.decode()):
-            raise KeyNotMatchPatternError('key not match pattern')
+        try:
+            if pattern is not None and not pattern.match(fn.decode()):
+                raise KeyNotMatchPatternError('key not match pattern')
+        except UnicodeDecodeError as e:
+            raise InvalidFileError('invalid file') from e
         sz0 = self.fd.read(4)
         if len(sz0) != 4:
             raise InvalidFileError('invalid file')
@@ -130,24 +133,24 @@ class Reader:
         if pattern is not None and not isinstance(pattern, re.Pattern):
             pattern = re.compile(pattern)
         decoder = kwargs.get('decoder', self.decoder)
-        self.log("start seek_next from position: ", current_pos, file=sys.stderr)
+        self.log("start seek_next from position: ", current_pos)
         while True:
             try:
                 key = self._check_if_next_is_key(max_key_size, pattern)
                 if key is not None:
-                    self.log("found key, current_pos: %d, key: %s", current_pos, key, file=sys.stderr)
+                    self.log("found key, current_pos: %d, key: %s", current_pos, key)
                     value = self._check_if_next_is_value(max_value_size, decoder)
                     if value is not None:
                         found = True
-                        self.log("found, current_pos: %d, key: %s, value: %s", current_pos, key, value[:30], file=sys.stderr)
+                        self.log("found, current_pos: %d, key: %s, value: %s", current_pos, key, value[:30])
                         break
             except (brotli.error, zlib.error, UnicodeDecodeError) as e:
-                self.log("seek error: %s, seek to next document", e, file=sys.stderr)
+                self.log("seek error: %s, seek to next document", e)
             current_pos += 1
             if current_pos % 1000 == 0:
-                self.log("current_pos: %d, _fsz: %d", current_pos, self._fsz, file=sys.stderr)
+                self.log("current_pos: %d, _fsz: %d", current_pos, self._fsz)
             if current_pos > self._fsz:
-                self.log("end of file, current_pos: %d, _fsz: %d", current_pos, self._fsz, file=sys.stderr)
+                self.log("end of file, current_pos: %d, _fsz: %d", current_pos, self._fsz)
                 break
             self.fd.seek(current_pos)
         if not found:
@@ -211,12 +214,12 @@ class Reader:
             try:
                 return self._readone_i(key_only, decoder, pattern)
             except (IOError, zlib.error, ReaderError) as e:
-                print(f"read error: {e}, seek to next document", file=sys.stderr)
+                print(f"read error: {e}, seek to next document")
                 pos = self._seek_next_i(offset=original_pos, pattern=pattern)
                 if pos is None:
-                    print("no next document, return None", file=sys.stderr)
+                    print("no next document, return None")
                     return None, None
-                print(f"next document found at position: {pos}", file=sys.stderr)
+                print(f"next document found at position: {pos}")
                 self.fd.seek(pos)
                 self._nread = pos
                 return self._readone_i(key_only, decoder)
