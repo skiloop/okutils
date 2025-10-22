@@ -10,7 +10,39 @@ import brotli
 from .decoders import brotli_decompress, get_decompresser
 
 
+class ReaderError(Exception):
+    """reader error
+
+    Args:
+        Exception: exception
+    """
+
+class KeyNotMatchPatternError(ReaderError):
+    """key not match pattern error
+
+    Args:
+        ReaderError: reader error
+    """
+
+class InvalidFileError(ReaderError):
+    """invalid file error
+
+    Args:
+        ReaderError: reader error
+    """
+
 class Reader:
+    """reader for bin file
+
+    Args:
+        fn: bin file name
+        decoder: decoder function
+
+    Attributes:
+        DEFAULT_MAX_KEY_SIZE: default max key size
+        DEFAULT_MAX_VALUE_SIZE: default max value size
+        VERBOSE: verbose mode
+    """
     DEFAULT_MAX_KEY_SIZE = 1024
     DEFAULT_MAX_VALUE_SIZE = 0
     VERBOSE = False
@@ -38,30 +70,31 @@ class Reader:
         if Reader.VERBOSE:
             print(msg, *args, **kwargs)
 
-    def _readone_i(self, key_only=False, decoder=None):
+    def _readone_i(self, key_only=False, decoder=None, pattern=None):
         if decoder is None:
             decoder = self.decoder
         sz0 = self.fd.read(4)
         if len(sz0) == 0:
             return None, None
         if len(sz0) != 4:
-            raise IOError('invalid file')
+            raise InvalidFileError('invalid file')
         (sz,) = struct.unpack("I", sz0)
         fn = self.fd.read(sz)
         if len(fn) != sz:
-            raise IOError('invalid file')
+            raise InvalidFileError('invalid file')
         self._nread += sz + 4
-
+        if pattern is not None and not pattern.match(fn.decode()):
+            raise KeyNotMatchPatternError('key not match pattern')
         sz0 = self.fd.read(4)
         if len(sz0) != 4:
-            raise IOError('invalid file')
+            raise InvalidFileError('invalid file')
         (sz,) = struct.unpack("I", sz0)
         if key_only:
             self.fd.seek(sz, 1)
             return fn, None
         conn = self.fd.read(sz)
         if len(conn) != sz:
-            raise IOError('invalid file')
+            raise InvalidFileError('invalid file')
         self._nread += sz + 4
         if decoder:
             conn = decoder(conn)
@@ -131,6 +164,7 @@ class Reader:
         fn = self.fd.read(sz)
         if len(fn) != sz:
             return None
+        fn = fn.decode()
         if key_pattern is not None and not key_pattern.match(fn):
             return None
         return fn
@@ -170,11 +204,13 @@ class Reader:
         key_only = kwargs.get('key_only', False)
         decoder = kwargs.get('decoder', None)
         pattern = kwargs.get('pattern', None)
+        if pattern is not None and not isinstance(pattern, re.Pattern):
+            pattern = re.compile(pattern)
         with self.lock:
             original_pos = self.fd.tell()
             try:
-                return self._readone_i(key_only, decoder)
-            except (IOError, zlib.error) as e:
+                return self._readone_i(key_only, decoder, pattern)
+            except (IOError, zlib.error, ReaderError) as e:
                 print(f"read error: {e}, seek to next document", file=sys.stderr)
                 pos = self._seek_next_i(offset=original_pos, pattern=pattern)
                 if pos is None:
@@ -187,15 +223,16 @@ class Reader:
             except Exception as e:
                 raise e
 
-    def readone_at(self, pos) -> Tuple[bytes, Any]:
+    def readone_at(self, pos, **kwargs) -> Tuple[bytes, Any]:
         """
         read document at specified position
         :param pos: document position
+        :param pattern: pattern to match key, if None use default pattern
         :return:  (key, content)
         """
         with self.lock:
             self.fd.seek(pos)
-            return self._readone_i()
+            return self._readone_i(**kwargs)
 
     def iter(self, **kwargs) -> Iterable[Tuple[bytes, Any]]:
         """
@@ -210,14 +247,13 @@ class Reader:
                 break
             yield key, value
 
-    def apply(self, action):
+    def apply(self, action, **kwargs):
         """
 
         :param action: func to handle doc, parameters are like (key:str, value:bytes)
-
         :return:
         """
-        for key, value in self.iter():
+        for key, value in self.iter(**kwargs):
             action(key.decode(), value)
 
 
