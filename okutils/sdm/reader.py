@@ -8,29 +8,7 @@ import zlib
 import brotli
 
 from .decoders import brotli_decompress, get_decompresser
-
-
-class ReaderError(Exception):
-    """reader error
-
-    Args:
-        Exception: exception
-    """
-
-class KeyNotMatchPatternError(ReaderError):
-    """key not match pattern error
-
-    Args:
-        ReaderError: reader error
-    """
-
-class InvalidFileError(ReaderError):
-    """invalid file error
-
-    Args:
-        ReaderError: reader error
-    """
-
+from .errors import InvalidFileError, KeyNotMatchPatternError, ReaderError
 class Reader:
     """reader for bin file
 
@@ -235,7 +213,7 @@ class Reader:
         """
         with self.lock:
             self.fd.seek(pos)
-            return self._readone_i(**kwargs)
+            return self.readone(**kwargs)
 
     def iter(self, **kwargs) -> Iterable[Tuple[bytes, Any]]:
         """
